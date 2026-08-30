@@ -9,27 +9,10 @@
       {
         "type": "udp",
         "tag": "resolver",
-        "server": "1.1.1.1",
-        "address_resolver": "localhost",
-        "address_strategy": "ipv4_only",
-        "detour": "direct"
-      },
-      {
-        "type": "udp",
-        "tag": "resolver-fallback",
-        "server": "8.8.8.8",
-        "address_resolver": "localhost",
-        "address_strategy": "ipv4_only",
-        "detour": "direct"
+        "server": "1.1.1.1"
       }
     ],
-    "strategy": "ipv4_only",
-    "cache": {
-      "enabled": true,
-      "story": "",
-      "expire": 1800
-    },
-    "final": "resolver"
+    "strategy": "ipv4_only"
   },
   "inbounds": [
     {
@@ -52,13 +35,7 @@
       },
       "multiplex": {
         "enabled": true,
-        "padding": false,
-        "protocol": "smux",
-        "max_connections": 2,
-        "min_streams": 8,
-        "max_streams": 16,
-        "max_packet_size": 32768,
-        "buffered": true
+        "padding": false
       }
     }
   ],
@@ -69,10 +46,7 @@
       "domain_resolver": {
         "server": "resolver",
         "strategy": "ipv4_only"
-      },
-      "tcp_fast_open": true,
-      "udp_fragment": false,
-      "domain_strategy": "ipv4_only"
+      }
     },
     {
       "type": "block",
@@ -90,8 +64,6 @@
     "default_domain_resolver": {
       "server": "resolver",
       "strategy": "ipv4_only"
-    },
-    "auto_detect_interface": false,
-    "override_android_vpn": false
+    }
   }
 }
