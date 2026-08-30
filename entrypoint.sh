@@ -20,13 +20,12 @@ fi
 # 排障模式：临时开启 debug 日志，排查完成后改回 error
 export LOG_LEVEL="${LOG_LEVEL:-error}"
 
-# 尝试调高最大文件描述符数，应对连接数增多。沙箱环境可能不允许调整，
-# 失败也不影响启动（|| true），只是退回平台默认值。
+# --- 低资源容器的系统调优（沙箱可能不允许，失败就跳过，不阻塞启动）---
+# 1) 调高 fd 上限：mux 场景每个 WS 连接对应多个子流，fd 不够会直接拒绝
 ulimit -n 65535 2>/dev/null || true
 
-# 启动日志：UUID / WS_PATH 均脱敏，避免敏感信息进入平台日志
-echo "Starting sing-box: PORT=${PORT} WS_PATH=*** LOG_LEVEL=${LOG_LEVEL} GOMAXPROCS=${GOMAXPROCS} GOMEMLIMIT=${GOMEMLIMIT} ulimit-n=$(ulimit -n)"
-
+# 2) sing-box 配置检查（预检）：用 sing-box check 验证生成的 JSON，
+#    避免配置写错导致进程起了但实际不工作（浪费冷启动 CPU 周期）
 mkdir -p /etc/sing-box
 
 # busybox 没有 envsubst，用 sed 替换自定义占位符（@XXX@），
@@ -37,8 +36,19 @@ sed -e "s/@PORT@/${PORT}/g" \
     -e "s/@LOG_LEVEL@/${LOG_LEVEL}/g" \
     /etc/sing-box/config.template.json > /etc/sing-box/config.json
 
+# 预检：配置有错直接 fail-fast，让平台日志立刻看到错误，不用等到请求进来才发现
+sing-box check -c /etc/sing-box/config.json || {
+  echo "ERROR: sing-box config check failed. Dumping sanitized config:" >&2
+  sed -e 's/"uuid": ".*"/"uuid": "***"/' \
+      -e 's#"path": ".*"#"path": "***"#' \
+      /etc/sing-box/config.json >&2
+  exit 2
+}
+
+# 启动日志：UUID / WS_PATH 均脱敏，避免敏感信息进入平台日志
+echo "Starting sing-box: PORT=${PORT} WS_PATH=*** LOG_LEVEL=${LOG_LEVEL} GOMAXPROCS=${GOMAXPROCS} GOMEMLIMIT=${GOMEMLIMIT} GOGC=${GOGC} ulimit-n=$(ulimit -n)"
+
 # 打印出去除敏感信息后的配置，便于在平台日志里排查启动问题
-# UUID 和 WS_PATH 均脱敏
 sed -e 's/"uuid": ".*"/"uuid": "***"/' \
     -e 's#"path": ".*"#"path": "***"#' \
     /etc/sing-box/config.json
