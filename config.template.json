@@ -1,17 +1,35 @@
 {
   "log": {
     "level": "@LOG_LEVEL@",
-    "timestamp": false
+    "timestamp": false,
+    "disable_color": true
   },
   "dns": {
     "servers": [
       {
         "type": "udp",
         "tag": "resolver",
-        "server": "1.1.1.1"
+        "server": "1.1.1.1",
+        "address_resolver": "localhost",
+        "address_strategy": "ipv4_only",
+        "detour": "direct"
+      },
+      {
+        "type": "udp",
+        "tag": "resolver-fallback",
+        "server": "8.8.8.8",
+        "address_resolver": "localhost",
+        "address_strategy": "ipv4_only",
+        "detour": "direct"
       }
     ],
-    "strategy": "ipv4_only"
+    "strategy": "ipv4_only",
+    "cache": {
+      "enabled": true,
+      "story": "",
+      "expire": 1800
+    },
+    "final": "resolver"
   },
   "inbounds": [
     {
@@ -29,12 +47,18 @@
       "transport": {
         "type": "ws",
         "path": "@WS_PATH@",
-        "max_early_data": 2048,
+        "max_early_data": 1024,
         "early_data_header_name": "Sec-WebSocket-Protocol"
       },
       "multiplex": {
         "enabled": true,
-        "padding": false
+        "padding": false,
+        "protocol": "smux",
+        "max_connections": 2,
+        "min_streams": 8,
+        "max_streams": 16,
+        "max_packet_size": 32768,
+        "buffered": true
       }
     }
   ],
@@ -45,7 +69,10 @@
       "domain_resolver": {
         "server": "resolver",
         "strategy": "ipv4_only"
-      }
+      },
+      "tcp_fast_open": true,
+      "udp_fragment": false,
+      "domain_strategy": "ipv4_only"
     },
     {
       "type": "block",
@@ -63,6 +90,8 @@
     "default_domain_resolver": {
       "server": "resolver",
       "strategy": "ipv4_only"
-    }
+    },
+    "auto_detect_interface": false,
+    "override_android_vpn": false
   }
 }
