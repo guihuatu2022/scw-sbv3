@@ -11,7 +11,7 @@
     "headers": {
       "X-Proxy-Token": "你的WS_SECRET（与 Worker 变量 WS_SECRET 一致）"
     },
-    "max_early_data": 2048,
+    "max_early_data": 1024,
     "early_data_header_name": "Sec-WebSocket-Protocol"
   },
   "tls": {
@@ -25,6 +25,12 @@
   },
   "multiplex": {
     "enabled": true,
-    "padding": false
+    "padding": false,
+    "protocol": "smux",
+    "max_connections": 2,
+    "min_streams": 8,
+    "max_streams": 16,
+    "max_packet_size": 32768,
+    "buffered": true
   }
 }
